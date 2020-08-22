@@ -118,12 +118,15 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Program Files (x86)\Microsoft Visual Studio\Shared\libtorch\libtorch\include;C:\Program Files (x86)\Microsoft Visual Studio\Shared\libtorch\libtorch\include\torch\csrc\api\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.0\include;</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>header.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files (x86)\Microsoft Visual Studio\Shared\libtorch\libtorch\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;torch_cpu.lib;c10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Microsoft Visual Studio\Shared\libtorch\libtorch\lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.0\lib\x64;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;torch_cpu.lib;c10.lib;c10_cuda.lib;torch_cuda.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>-INCLUDE:?warp_size@cuda@at@@YAHXZ %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,6 +138,8 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Program Files (x86)\Microsoft Visual Studio\Shared\libtorch\include;C:\Program Files (x86)\Microsoft Visual Studio\Shared\libtorch\include\torch\csrc\api\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.0\include;</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>header.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,10 +152,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="header.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="header.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

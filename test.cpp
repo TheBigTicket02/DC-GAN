@@ -1,17 +1,15 @@
-#include <torch/torch.h>
-#include <iostream>
+#include "header.h"
 
-using namespace std;
 using namespace torch;
 
 
 int main() {
 	Tensor tensor1 = torch::rand({5,9});
-	Tensor tensor2 = torch::rand({ 9,2 });
-	Tensor tensor3 = torch::rand({ 3,3 }, at::kCUDA);
-	cout << torch::mm(tensor1, tensor2) << endl;
-	cout << "GPU Available: " << torch::cuda::is_available() << endl;
-	cout << tensor3 << endl; 
-	cin.get();
+	Tensor tensor2 = torch::rand({ 9,5 });
+	Tensor tensor3 = torch::rand({ 4,2 }, at::kCUDA);
+	std::cout << torch::mm(tensor1, tensor2) << std::endl;
+	std::cout << "GPU Available: " << torch::cuda::is_available() << std::endl;
+	std::cout << tensor3 << std::endl; 
+	std::cin.get();
 
 }
