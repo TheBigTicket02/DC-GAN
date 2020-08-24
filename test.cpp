@@ -5,6 +5,28 @@ using namespace torch;
 // The size of the noise vector fed to the generator.
 const int64_t kNoiseSize = 100;
 
+// The batch size for training.
+const int64_t kBatchSize = 64;
+
+// The number of epochs to train.
+const int64_t kNumberOfEpochs = 30;
+
+// Where to find the MNIST dataset.
+const char* kDataFolder = "./data";
+
+// After how many batches to create a new checkpoint periodically.
+const int64_t kCheckpointEvery = 200;
+
+// How many images to sample at every checkpoint.
+const int64_t kNumberOfSamplesPerCheckpoint = 10;
+
+// Set to `true` to restore models and optimizers from previously saved
+// checkpoints.
+const bool kRestoreFromCheckpoint = false;
+
+// After how many batches to log a new update with the loss value.
+const int64_t kLogInterval = 10;
+
 struct DCGANGeneratorImpl : nn::Module {
     DCGANGeneratorImpl(int kNoiseSize)
         : conv1(nn::ConvTranspose2dOptions(kNoiseSize, 512, 4)
@@ -54,6 +76,8 @@ struct DCGANGeneratorImpl : nn::Module {
     nn::ConvTranspose2d conv1, conv2, conv3, conv4, conv5;
     nn::BatchNorm2d batch_norm1, batch_norm2, batch_norm3, batch_norm4;
 };
+
+TORCH_MODULE(DCGANGenerator);
 
 auto ReadCsv(std::string& location) {
     std::fstream in(location, std::ios::in);
