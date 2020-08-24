@@ -55,7 +55,60 @@ struct DCGANGeneratorImpl : nn::Module {
     nn::BatchNorm2d batch_norm1, batch_norm2, batch_norm3, batch_norm4;
 };
 
+auto ReadCsv(std::string& location) {
+    std::fstream in(location, std::ios::in);
+    std::string line;
+    std::string name;
+    std::string label;
+    std::vector<std::tuple<std::string, int64_t>> csv;
 
+    while (getline(in, line)) {
+        std::stringstream s(line);
+        getline(s, name, ',');
+        getline(s, label, ',');
+
+        csv.push_back(std::make_tuple(name, stoi(label)));
+    }
+    return csv;
+};
+
+struct Dataset : torch::data::Dataset<Dataset>
+{
+
+    std::vector<std::tuple<std::string /*file location*/, int64_t /*label*/>> csv_;
+
+    Dataset(std::string& file_names_csv)
+        // Load csv file with file locations and labels.
+        : csv_(ReadCsv(file_names_csv)) {
+
+    };
+
+    // Override the get method to load custom data.
+    torch::data::Example<> get(size_t index) override {
+
+        std::string file_location = std::get<0>(csv_[index]);
+        int64_t label = std::get<1>(csv_[label]);
+
+        // Load image with OpenCV.
+        cv::Mat img = cv::imread(file_location);
+
+        // Convert the image and label to a tensor.
+        // Here we need to clone the data, as from_blob does not change the ownership of the underlying memory,
+        // which, therefore, still belongs to OpenCV. If we did not clone the data at this point, the memory
+        // would be deallocated after leaving the scope of this get method, which results in undefined behavior.
+        Tensor img_tensor = torch::from_blob(img.data, { img.rows, img.cols, 3 }, torch::kByte).clone();
+        img_tensor = img_tensor.permute({ 2, 0, 1 }); // convert to CxHxW
+        Tensor label_tensor = torch::full({ 1 }, label);
+
+        return { img_tensor, label_tensor };
+    };
+
+    // Override the size method to infer the size of the data set.
+    torch::optional<size_t> size() const override {
+
+        return csv_.size();
+    };
+};
 
 int main() {
 
