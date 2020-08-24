@@ -7,7 +7,7 @@ const int64_t kNoiseSize = 100;
 
 struct DCGANGeneratorImpl : nn::Module {
     DCGANGeneratorImpl(int kNoiseSize)
-        : conv1(nn::ConvTranspose1dOptions(kNoiseSize, 512, 4)
+        : conv1(nn::ConvTranspose2dOptions(kNoiseSize, 512, 4)
             .bias(false)),
         batch_norm1(512),
         conv2(nn::ConvTranspose2dOptions(512, 256, 4)
