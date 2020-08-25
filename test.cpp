@@ -182,7 +182,7 @@ int main() {
 
     auto data_loader = data::make_data_loader<data::samplers::RandomSampler>(
         dataset,
-        kBatchSize);
+        data::DataLoaderOptions().workers(2).batch_size(kBatchSize).enforce_ordering(false));
 
     optim::Adam generator_optimizer(
         generator->parameters(), optim::AdamOptions(2e-4).betas(std::make_tuple(0.5, 0.5)));
