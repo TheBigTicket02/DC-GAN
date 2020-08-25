@@ -193,35 +193,35 @@ int main() {
     int64_t checkpoint_counter = 1;
     for (int64_t epoch = 1; epoch <= kNumberOfEpochs; ++epoch) {
         int64_t batch_index = 0;
-        for (torch::data::Example<>& batch : *data_loader) {
+        for (auto& batch : *data_loader) {
             // Train discriminator with real images.
             discriminator->zero_grad();
-            torch::Tensor real_images = batch.data.to(device);
-            torch::Tensor real_labels =
+            Tensor real_images = batch.data.to(device);
+            Tensor real_labels =
                 torch::empty(batch.data.size(0), device).uniform_(0.8, 1.0);
-            torch::Tensor real_output = discriminator->forward(real_images);
-            torch::Tensor d_loss_real =
-                torch::binary_cross_entropy(real_output, real_labels);
+            Tensor real_output = discriminator->forward(real_images);
+            Tensor d_loss_real =
+                binary_cross_entropy(real_output, real_labels);
             d_loss_real.backward();
 
             // Train discriminator with fake images.
-            torch::Tensor noise =
+            Tensor noise =
                 torch::randn({ batch.data.size(0), kNoiseSize, 1, 1 }, device);
-            torch::Tensor fake_images = generator->forward(noise);
-            torch::Tensor fake_labels = torch::zeros(batch.data.size(0), device);
-            torch::Tensor fake_output = discriminator->forward(fake_images.detach());
-            torch::Tensor d_loss_fake =
+            Tensor fake_images = generator->forward(noise);
+            Tensor fake_labels = torch::zeros(batch.data.size(0), device);
+            Tensor fake_output = discriminator->forward(fake_images.detach());
+            Tensor d_loss_fake =
                 torch::binary_cross_entropy(fake_output, fake_labels);
             d_loss_fake.backward();
 
-            torch::Tensor d_loss = d_loss_real + d_loss_fake;
+            Tensor d_loss = d_loss_real + d_loss_fake;
             discriminator_optimizer.step();
 
             // Train generator.
             generator->zero_grad();
             fake_labels.fill_(1);
             fake_output = discriminator->forward(fake_images);
-            torch::Tensor g_loss =
+            Tensor g_loss =
                 torch::binary_cross_entropy(fake_output, fake_labels);
             g_loss.backward();
             generator_optimizer.step();
@@ -244,7 +244,7 @@ int main() {
                 torch::save(
                     discriminator_optimizer, "discriminator-optimizer-checkpoint.pt");
                 // Sample the generator and save the images.
-                torch::Tensor samples = generator->forward(torch::randn(
+                Tensor samples = generator->forward(torch::randn(
                     { kNumberOfSamplesPerCheckpoint, kNoiseSize, 1, 1 }, device));
                 torch::save(
                     (samples + 1.0) / 2.0,
