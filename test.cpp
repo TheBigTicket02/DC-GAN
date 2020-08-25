@@ -2,30 +2,44 @@
 
 using namespace torch;
 
+// Reshaped Image Size
+const int64_t kImageSize = 64;
+
 // The size of the noise vector fed to the generator.
-const int64_t kNoiseSize = 100;
+const int64_t kLatentDim = 100;
 
 // The batch size for training.
 const int64_t kBatchSize = 64;
+
+// Number of workers
+const int64_t kNumOfWorkers = 4;
+
+// Enforce ordering
+const bool kEnforceOrder = false;
 
 // The number of epochs to train.
 const int64_t kNumberOfEpochs = 30;
 
 // Where to find the MNIST dataset.
-const char* kDataFolder = "./data";
+const string kCsvFile = "../file_names.csv";
 
 // After how many batches to create a new checkpoint periodically.
 const int64_t kCheckpointEvery = 200;
 
 // How many images to sample at every checkpoint.
-const int64_t kNumberOfSamplesPerCheckpoint = 10;
-
-// Set to `true` to restore models and optimizers from previously saved
-// checkpoints.
-const bool kRestoreFromCheckpoint = false;
+const int64_t kNumberOfSamplesPerCheckpoint = 64;
 
 // After how many batches to log a new update with the loss value.
 const int64_t kLogInterval = 10;
+
+// Learning Rate
+const double kLr = 2e-4;
+
+// Beta1
+const double kBeta1 = 0.5;
+
+// Beta2
+const double kBeta2 = 0.999;
 
 struct DCGANGeneratorImpl : nn::Module {
     DCGANGeneratorImpl(int kNoiseSize)
@@ -91,7 +105,7 @@ auto ReadCsv(std::string& location) {
         getline(s, name, ',');
         getline(s, label, ',');
 
-        csv.push_back(std::make_tuple(name, stoi(label)));
+        csv.push_back(std::make_tuple("../" + name, stoi(label)));
     }
     return csv;
 };
@@ -115,6 +129,8 @@ struct FaceDataset : torch::data::Dataset<FaceDataset>
 
         // Load image with OpenCV.
         cv::Mat img = cv::imread(file_location);
+
+        cv::resize(img, img, cv::Size(kImageSize,kImageSize));
 
         // Convert the image and label to a tensor.
         // Here we need to clone the data, as from_blob does not change the ownership of the underlying memory,
@@ -143,7 +159,7 @@ int main() {
         device = torch::Device(torch::kCUDA);
     }
 
-    DCGANGenerator generator(kNoiseSize);
+    DCGANGenerator generator(kLatentDim);
     generator->to(device);
 
     nn::Sequential discriminator(
@@ -172,7 +188,7 @@ int main() {
         nn::Sigmoid());
     discriminator->to(device);
 
-    std::string file_names_csv = "./file_names.csv";
+    std::string file_names_csv = kCsvFile;
     auto dataset = FaceDataset(file_names_csv)
         .map(data::transforms::Normalize<>(0.5, 0.5))
         .map(data::transforms::Stack<>());
@@ -182,12 +198,12 @@ int main() {
 
     auto data_loader = data::make_data_loader<data::samplers::RandomSampler>(
         dataset,
-        data::DataLoaderOptions().workers(2).batch_size(kBatchSize).enforce_ordering(false));
+        data::DataLoaderOptions().workers(kNumOfWorkers).batch_size(kBatchSize).enforce_ordering(kEnforceOrder));
 
     optim::Adam generator_optimizer(
-        generator->parameters(), optim::AdamOptions(2e-4).betas(std::make_tuple(0.5, 0.5)));
+        generator->parameters(), optim::AdamOptions(kLr).betas(std::make_tuple(kBeta1, kBeta2)));
     optim::Adam discriminator_optimizer(
-        discriminator->parameters(), optim::AdamOptions(2e-4).betas(std::make_tuple(0.5, 0.5)));
+        discriminator->parameters(), optim::AdamOptions(kLr).betas(std::make_tuple(kBeta1, kBeta2)));
 
 
     int64_t checkpoint_counter = 1;
@@ -206,7 +222,7 @@ int main() {
 
             // Train discriminator with fake images.
             Tensor noise =
-                torch::randn({ batch.data.size(0), kNoiseSize, 1, 1 }, device);
+                torch::randn({ batch.data.size(0), kLatentDim, 1, 1 }, device);
             Tensor fake_images = generator->forward(noise);
             Tensor fake_labels = torch::zeros(batch.data.size(0), device);
             Tensor fake_output = discriminator->forward(fake_images.detach());
@@ -245,7 +261,7 @@ int main() {
                     discriminator_optimizer, "discriminator-optimizer-checkpoint.pt");
                 // Sample the generator and save the images.
                 Tensor samples = generator->forward(torch::randn(
-                    { kNumberOfSamplesPerCheckpoint, kNoiseSize, 1, 1 }, device));
+                    { kNumberOfSamplesPerCheckpoint, kLatentDim, 1, 1 }, device));
                 torch::save(
                     (samples + 1.0) / 2.0,
                     torch::str("dcgan-sample-", checkpoint_counter, ".pt"));
