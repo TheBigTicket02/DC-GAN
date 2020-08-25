@@ -20,7 +20,7 @@ const bool kEnforceOrder = false;
 // The number of epochs to train.
 const int64_t kNumberOfEpochs = 30;
 
-// Where to find the MNIST dataset.
+// Where to find the CSV with file locations.
 const string kCsvFile = "../file_names.csv";
 
 // After how many batches to create a new checkpoint periodically.
@@ -42,8 +42,8 @@ const double kBeta1 = 0.5;
 const double kBeta2 = 0.999;
 
 struct DCGANGeneratorImpl : nn::Module {
-    DCGANGeneratorImpl(int kNoiseSize)
-        : conv1(nn::ConvTranspose2dOptions(kNoiseSize, 512, 4)
+    DCGANGeneratorImpl(int kLatentDim)
+        : conv1(nn::ConvTranspose2dOptions(kLatentDim, 512, 4)
             .bias(false)),
         batch_norm1(512),
         conv2(nn::ConvTranspose2dOptions(512, 256, 4)
